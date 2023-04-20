@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seating Randomisation</title>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.6/dist/web/variable/pretendardvariable-jp-dynamic-subset.css" />
+  <style>
+    body {
+      font-family: "Pretendard JP Variable", "Pretendard JP", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Hiragino Sans", "Apple SD Gothic Neo", Meiryo, "Noto Sans JP", "Noto Sans KR", "Malgun Gothic", Osaka, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background-color: #fff;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(6, 50px);
+      grid-template-rows: repeat(3, 50px);
+      gap: 5px;
+    }
+
+    .seat {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #000;
+      color: white;
+      font-weight: bold;
+      border-radius: 50%;
+      width: 100%;
+      height: 100%;
+    }
+
+    .dragging {
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+  <h1>Seating Randomisation</h1>
+  <div class="container" id="seatingContainer"></div>
+
+  <script>
+    const students = Array.from({ length: 16 }, (_, i) => i + 1);
+    const numberOfRows = 3;
+    const numberOfColumns = 6;
+    const unavailableSeats = [
+      { row: 3, column: 1 },
+      { row: 3, column: 6 },
+    ];
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function createSeatingPlan() {
+      const container = document.getElementById('seatingContainer');
+      container.innerHTML = '';
+
+      shuffleArray(students);
+      let studentIndex = 0;
+
+      for (let row = 1; row <= numberOfRows; row++) {
+        for (let column = 1; column <= numberOfColumns; column++) {
+          const isUnavailableSeat = unavailableSeats.some(
+            (seat) => seat.row === row && seat.column === column
+          );
+
+          if (!isUnavailableSeat) {
+            const seat = document.createElement('div');
+            seat.className = 'seat';
+            seat.textContent = students[studentIndex++];
+            seat.draggable = true;
+            seat.addEventListener('dragstart', handleDragStart);
+            seat.addEventListener('dragend', handleDragEnd);
+            container.appendChild(seat);
+          } else {
+            container.appendChild(document.createElement('div'));
+          }
+        }
+      }
+
+      container.addEventListener('dragover', handleDragOver);
+      container.addEventListener('drop', handleDrop);
+    }
+
+    let draggedElement = null;
+
+    function handleDragStart(e) {
+      draggedElement = e.target;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/html', draggedElement.innerHTML);
+      draggedElement.classList.add('dragging');
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
+
+    function handleDrop(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      if (draggedElement !== null && e.target.classList.contains('seat')) {
+        const temp = e.target.textContent;
+        e.target.textContent = draggedElement.textContent;
+        draggedElement.textContent = temp;
+      }
+    }
+
+    function handleDragEnd() {
+      draggedElement.classList.remove('dragging');
+      draggedElement = null;
+    }
+
+    createSeatingPlan();
+  </script>
+</body>
+</html>
